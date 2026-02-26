@@ -952,26 +952,32 @@
   }
 
   async function loadPartnerByCode(code){
-    clearMsg();
-    try{
-      const prof = await rpcGetProfileByShareCode(code);
-      if(!prof) return showErr("No profile found for that share code.");
-      if(prof.id === me.id) return showErr("That's your share code.");
+  clearMsg();
 
-      partner = prof;
+  // 1) Get partner profile via RPC (bypasses RLS safely for read-only)
+  const { data: profRows, error: pErr } = await sb.rpc("get_profile_by_share_code", { code });
+  if(pErr) return showErr(pErr.message);
 
-      const items = await rpcGetItemsByShareCode(code);
-      partnerItems = items || [];
-      buildPartnerFilters();
+  const data = (profRows && profRows[0]) ? profRows[0] : null;
+  if(!data) return showErr("No profile found for that share code.");
+  if(data.id === me.id) return showErr("That's your share code.");
 
-      $("#partnerSummary").classList.remove("hide");
-      $("#partnerSummary").innerHTML = `Loaded <b>${escapeHtml(partner.display_name || "Partner")}</b> 🐾 (<b>${partnerItems.length}</b> items)`;
-      renderPartner();
-      localStorage.setItem("bucketlist_partner_code", code);
-    }catch(err){
-      showErr(err?.message || String(err));
-    }
-  }
+  partner = data;
+
+  // 2) Get partner items via RPC (non-deleted only)
+  const { data: items, error: iErr } = await sb.rpc("get_items_by_share_code", { code });
+  if(iErr) return showErr(iErr.message);
+
+  partnerItems = items || [];
+  buildPartnerFilters();
+
+  $("#partnerSummary").classList.remove("hide");
+  $("#partnerSummary").innerHTML =
+    `Loaded <b>${escapeHtml(partner.display_name || "Partner")}</b> 🐾 (<b>${partnerItems.length}</b> items)`;
+
+  renderPartner();
+  localStorage.setItem("bucketlist_partner_code", code);
+}
 
   function buildPartnerFilters(){
     const cats = uniq(partnerItems.map(i => i.category).filter(Boolean)).sort();

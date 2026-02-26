@@ -569,6 +569,18 @@
   }
   function openLink(url){ window.open(url, "_blank", "noopener,noreferrer"); }
 
+   // ---------------------------------------------------------------
+  // DEBUG: red error if anything goes wrong (instead of dead buttons)
+  // -----------------------------------------------------------------
+  window.addEventListener("error", (e) => {
+    try { showErr("JS error: " + (e?.message || e)); } catch {}
+    console.error(e);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    try { showErr("Promise error: " + (e?.reason?.message || e?.reason || e)); } catch {}
+    console.error(e);
+  });
+
   // -----------------------------
   // TABS
   // -----------------------------

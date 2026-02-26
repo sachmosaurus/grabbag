@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>bucketlist</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg1:#ffd6f6; --bg2:#e0c3fc;
+      --card:#fff0fb; --card2:#ffffff;
+      --ink:#2b2b35; --muted:#6e6e84;
+      --pink:#ff69b4; --pink2:#ff8fd8;
+      --lav:#b99cff; --mint:#7fe7d4;
+      --warn:#ffb703; --danger:#ff4d6d;
+      --shadow: 0 14px 40px rgba(255,105,180,.25);
+      --shadow2: 0 8px 20px rgba(0,0,0,.08);
+      --radius: 22px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: Nunito, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1200px 800px at 20% 10%, var(--bg1), transparent 60%),
+                  radial-gradient(1200px 800px at 80% 30%, var(--bg2), transparent 60%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .wrap{
+      max-width: 1220px;
+      margin: 0 auto;
+      background: rgba(255,255,255,.9);
+      border: 2px solid rgba(255,105,180,.25);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      backdrop-filter: blur(6px);
+    }
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 16px;
+      padding: 6px 6px 14px 6px;
+      border-bottom: 3px dashed rgba(255,105,180,.35);
+      margin-bottom: 16px;
+    }
+    h1{ margin:0; font-size: 34px; line-height: 1.1; letter-spacing: .2px; }
+    h1 .paw{ filter: drop-shadow(0 4px 8px rgba(255,105,180,.35)); }
+    .sub{ margin:6px 0 0 0; color: var(--muted); font-size: 14px; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 10px 12px; border-radius: 999px;
+      background: rgba(255,105,180,.12);
+      border: 1px solid rgba(255,105,180,.25);
+      box-shadow: var(--shadow2);
+      font-weight: 800; color: #a31662; user-select:none;
+    }
+    .top-actions{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; justify-content:flex-end; }
+
+    button{
+      font-family: inherit; border: 0; border-radius: 14px;
+      padding: 10px 12px; font-weight: 900;
+      cursor: pointer; box-shadow: var(--shadow2);
+      transition: transform .08s ease, filter .08s ease;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    button:hover{ filter: brightness(1.03); }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
+
+    .btn{ background: var(--pink); color: white; }
+    .btn2{ background: var(--lav); color: white; }
+    .btn3{ background: rgba(0,0,0,.05); color: var(--ink); border: 1px solid rgba(0,0,0,.08); box-shadow: none; }
+    .btnDanger{ background: var(--danger); color: white; }
+
+    .grid{ display:grid; grid-template-columns: 380px 1fr; gap: 16px; }
+    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.8));
+      border: 2px solid rgba(255,105,180,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      padding: 14px;
+    }
+    .panel h2{ margin: 0 0 10px 0; font-size: 18px; }
+
+    label{ font-size: 12px; color: var(--muted); font-weight: 900; display:block; margin: 10px 0 6px 0; }
+    input, select, textarea{
+      width: 100%; font-family: inherit; padding: 10px 12px;
+      border-radius: 14px; border: 1px solid rgba(0,0,0,.10);
+      background: white; outline: none; box-shadow: inset 0 1px 0 rgba(0,0,0,.03);
+    }
+    textarea{ min-height: 92px; resize: vertical; }
+
+    .tabs{ display:flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 0 0; }
+    .tab{
+      padding: 10px 12px; border-radius: 999px;
+      border: 1px solid rgba(255,105,180,.25);
+      background: rgba(255,105,180,.10);
+      color: #a31662; box-shadow: none; font-weight: 900;
+    }
+    .tab.active{ background: var(--pink); color: white; border-color: rgba(255,105,180,.45); }
+
+    .bucketHead{
+      display:flex; justify-content:space-between; align-items:center;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .bucketTitle{ font-size: 18px; font-weight: 900; }
+    .bucketDesc{ color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .bucketGraphic{
+      padding: 10px 12px; border-radius: 16px;
+      background: rgba(185,156,255,.15);
+      border: 1px solid rgba(185,156,255,.25);
+      font-weight: 900; color: #4c2a9a; display:flex; align-items:center; gap: 8px; user-select:none;
+    }
+
+    .cards{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    @media (max-width: 860px){ .cards{ grid-template-columns: 1fr; } }
+
+    .card{
+      background: var(--card);
+      border: 2px solid rgba(255,105,180,.18);
+      border-radius: 20px;
+      box-shadow: var(--shadow2);
+      padding: 12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-40px -80px auto auto;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,105,180,.28), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .cardTop{ display:flex; align-items:flex-start; justify-content:space-between; gap: 8px; }
+    .titleLine{ font-weight: 900; font-size: 15px; margin: 0; padding-right: 6px; }
+    .meta{ color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .tag{
+      display:inline-flex; align-items:center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.65);
+      color: var(--ink); font-weight: 900; font-size: 12px; white-space: nowrap;
+    }
+    .desc{ margin-top: 10px; color: #3c3c4a; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+    .toolbar{ display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .iconBtn{
+      padding: 9px 10px; border-radius: 14px; font-weight: 900;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: none;
+    }
+    .iconBtn:hover{ filter: brightness(1.02); }
+    .iconDanger{ border-color: rgba(255,77,109,.35); color: #c1123f; }
+    .iconOk{ border-color: rgba(127,231,212,.45); color: #0e7a69; }
+    .iconGo{ border-color: rgba(185,156,255,.45); color: #4c2a9a; }
+
+    .notice{
+      padding: 10px 12px; border-radius: 16px;
+      border: 1px solid rgba(255,183,3,.35);
+      background: rgba(255,183,3,.12);
+      color: #6a4c00; font-weight: 900; font-size: 13px;
+    }
+    .success{
+      padding: 10px 12px; border-radius: 16px;
+      border: 1px solid rgba(127,231,212,.45);
+      background: rgba(127,231,212,.16);
+      color: #0a5a4f; font-weight: 900; font-size: 13px;
+    }
+    .error{
+      padding: 10px 12px; border-radius: 16px;
+      border: 1px solid rgba(255,77,109,.35);
+      background: rgba(255,77,109,.10);
+      color: #7a0b2a; font-weight: 900; font-size: 13px;
+    }
+
+    .row{ display:flex; gap: 10px; flex-wrap: wrap; }
+    .row > *{ flex: 1; min-width: 140px; }
+    .sep{ height: 10px; }
+    .hide{ display:none !important; }
+    footer{ margin-top: 14px; color: var(--muted); font-size: 12px; text-align:center; }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: rgba(0,0,0,.05);
+      border: 1px solid rgba(0,0,0,.08);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .dow{ display:grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 8px; margin-top: 6px; }
+    .dow label{
+      margin: 0;
+      font-size: 12px;
+      font-weight: 900;
+      color: #4c2a9a;
+      background: rgba(185,156,255,.12);
+      border: 1px solid rgba(185,156,255,.25);
+      border-radius: 14px;
+      padding: 8px 8px;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    .dow input{ display:none; }
+    .dow input:checked + span{
+      color: white;
+      background: var(--lav);
+      border-color: rgba(185,156,255,.55);
+      border-radius: 12px;
+      padding: 2px 6px;
+    }
+    .dueBanner{
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 10px; flex-wrap: wrap;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,105,180,.12);
+      border: 2px dashed rgba(255,105,180,.35);
+      font-weight: 900;
+      color: #a31662;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1><span class="paw">🐾</span> bucketlist</h1>
+        <p class="sub">Two-person shared buckets. Buttons open links (not text). Share-code browsing requires login. ✨</p>
+        <div class="tabs" id="tabs">
+          <button class="tab active" data-tab="my">🐱 My Bucket</button>
+          <button class="tab" data-tab="explore">🔎 Explore Partner</button>
+          <button class="tab" data-tab="notify">✉️ Updates</button>
+          <button class="tab" data-tab="settings">⚙️ Settings</button>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="pill" id="whoami">😺 Not signed in</div>
+        <button class="btn3" id="signOutBtn" title="Sign out">🚪 Sign out</button>
+      </div>
+    </header>
+
+    <div id="msg" class="success hide"></div>
+    <div id="err" class="error hide"></div>
+
+    <div class="panel" id="authPanel">
+      <h2>🔐 Sign in (or create an account)</h2>
+      <div class="row">
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <button class="btn" id="signInBtn">🐾 Sign in</button>
+        <button class="btn2" id="signUpBtn">🌸 Sign up</button>
+      </div>
+      <div class="sep"></div>
+      <div class="notice">
+        Setup required: open this file and replace:
+        <div style="margin-top:6px">
+          <span class="kbd">YOUR_SUPABASE_URL_HERE</span> and <span class="kbd">YOUR_SUPABASE_ANON_KEY_HERE</span>
+        </div>
+        with your Supabase project settings.
+      </div>
+    </div>
+
+    <div class="grid hide" id="appGrid">
+      <div class="panel">
+        <h2>🧺 Add item</h2>
+
+        <div class="notice">Max depth: <b>User → Category → Subcategory</b></div>
+
+        <label>Category</label>
+        <input id="category" placeholder="Music / Science / Films / etc" />
+
+        <label>Subcategory</label>
+        <input id="subcategory" placeholder="Uplifting / Evolution / Essays / etc" />
+
+        <label>Type</label>
+        <select id="type">
+          <option value="youtube">YouTube</option>
+          <option value="link">Link</option>
+          <option value="note">Note</option>
+        </select>
+
+        <label>Title</label>
+        <input id="title" placeholder="Song / video / idea title" />
+
+        <label>Artist / Source</label>
+        <input id="artist" placeholder="Artist / channel / author (optional)" />
+
+        <label>Year</label>
+        <input id="year" placeholder="1993 (optional)" />
+
+        <label>URL (optional)</label>
+        <input id="url" placeholder="https://..." />
+
+        <label>Recommend / testimonial / story / essay (optional)</label>
+        <textarea id="description" placeholder="Write anything. This is your creative exercise space."></textarea>
+
+        <div class="sep"></div>
+        <div class="row">
+          <button class="btn" id="addBtn">➕ Add</button>
+          <button class="btn3" id="clearFormBtn">🧼 Clear</button>
+        </div>
+
+        <div class="sep"></div>
+        <div class="row">
+          <button class="btn3" id="toggleDeletedBtn">🪦 Toggle deleted</button>
+          <button class="btnDanger" id="restoreAllBtn">♻️ Restore all deleted</button>
+        </div>
+
+        <div class="sep"></div>
+        <div class="notice">If URL is blank and Type=YouTube, the Watch button opens a YouTube search (biased to “subtitles lyrics”).</div>
+      </div>
+
+      <div class="panel">
+        <div id="tab-my">
+          <div class="bucketHead">
+            <div>
+              <div class="bucketTitle">🐱 My Bucket</div>
+              <div class="bucketDesc">Your items, organized by Category → Subcategory.</div>
+            </div>
+            <div class="bucketGraphic">🧁 Buckets inside buckets</div>
+          </div>
+
+          <div id="dueBanner" class="dueBanner hide">
+            <div id="dueText">🐾 Update due!</div>
+            <div class="row" style="flex:0 0 auto; min-width:auto;">
+              <button class="btn2" id="dueDraftBtn">✍️ Draft update email</button>
+              <button class="btn3" id="dueSnoozeBtn">😴 Not now</button>
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="row">
+            <div>
+              <label>Filter Category</label>
+              <select id="filterCategory"></select>
+            </div>
+            <div>
+              <label>Filter Subcategory</label>
+              <select id="filterSubcategory"></select>
+            </div>
+            <div>
+              <label>Search</label>
+              <input id="search" placeholder="Search titles / artists / text..." />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+          <div id="myCards" class="cards"></div>
+          <div id="myEmpty" class="notice hide">No items yet. Add something cute! 🐾</div>
+        </div>
+
+        <div id="tab-explore" class="hide">
+          <div class="bucketHead">
+            <div>
+              <div class="bucketTitle">🔎 Explore Partner</div>
+              <div class="bucketDesc">Load a partner bucket with their share code. You can “take” items into your bucket.</div>
+            </div>
+            <div class="bucketGraphic">🐾 Take & remix</div>
+          </div>
+
+          <label>Partner share code</label>
+          <div class="row">
+            <input id="partnerCode" placeholder="e.g. kitty-7h3k9p..." />
+            <button class="btn2" id="loadPartnerBtn">Load</button>
+          </div>
+
+          <div class="sep"></div>
+          <div id="partnerSummary" class="notice hide"></div>
+
+          <div class="row">
+            <div>
+              <label>Filter Category</label>
+              <select id="pFilterCategory"></select>
+            </div>
+            <div>
+              <label>Filter Subcategory</label>
+              <select id="pFilterSubcategory"></select>
+            </div>
+            <div>
+              <label>Search</label>
+              <input id="pSearch" placeholder="Search partner..." />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+          <div id="partnerCards" class="cards"></div>
+          <div id="partnerEmpty" class="notice hide">No partner items loaded yet.</div>
+        </div>
+
+        <div id="tab-notify" class="hide">
+          <div class="bucketHead">
+            <div>
+              <div class="bucketTitle">✉️ Updates</div>
+              <div class="bucketDesc">Track items you “took” from a partner. Draft an email summary and mark as notified.</div>
+            </div>
+            <div class="bucketGraphic">📨 Meow-mail</div>
+          </div>
+
+          <div class="notice">Emails are not auto-sent. The app opens a draft via your email client.</div>
+
+          <div class="sep"></div>
+          <div class="row">
+            <button class="btn2" id="refreshEventsBtn">🔄 Refresh</button>
+            <button class="btn" id="draftEmailBtn">✍️ Draft email</button>
+            <button class="btn3" id="markNotifiedBtn">✅ Mark as notified</button>
+          </div>
+
+          <div class="sep"></div>
+          <div id="eventsBox" class="notice hide"></div>
+          <div id="eventsList" class="cards"></div>
+          <div id="eventsEmpty" class="notice hide">No new takes to report yet. 🐾</div>
+        </div>
+
+        <div id="tab-settings" class="hide">
+          <div class="bucketHead">
+            <div>
+              <div class="bucketTitle">⚙️ Settings</div>
+              <div class="bucketDesc">Your share code + update schedule.</div>
+            </div>
+            <div class="bucketGraphic">🪪 Identity card</div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Display name</label>
+              <input id="displayName" placeholder="Victor / Friend / etc" />
+            </div>
+            <div>
+              <label>Contact email (From)</label>
+              <input id="contactEmail" placeholder="you@example.com" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Partner email (To)</label>
+              <input id="partnerEmail" placeholder="friend@example.com" />
+            </div>
+            <div>
+              <label>Update frequency</label>
+              <select id="updateFrequency">
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every other week</option>
+                <option value="every4w">Every 4 weeks</option>
+              </select>
+            </div>
+          </div>
+
+          <label>Update days (pick one or more)</label>
+          <div class="dow" id="dowGrid">
+            <label><input type="checkbox" value="0"><span>Sun</span></label>
+            <label><input type="checkbox" value="1"><span>Mon</span></label>
+            <label><input type="checkbox" value="2"><span>Tue</span></label>
+            <label><input type="checkbox" value="3"><span>Wed</span></label>
+            <label><input type="checkbox" value="4"><span>Thu</span></label>
+            <label><input type="checkbox" value="5"><span>Fri</span></label>
+            <label><input type="checkbox" value="6"><span>Sat</span></label>
+          </div>
+
+          <div class="sep"></div>
+
+          <label>Your share code</label>
+          <div class="row">
+            <input id="shareCode" readonly />
+            <button class="btn3" id="regenCodeBtn">🎲 New code</button>
+          </div>
+
+          <div class="sep"></div>
+          <div class="row">
+            <button class="btn" id="saveProfileBtn">💾 Save profile</button>
+          </div>
+
+          <div class="sep"></div>
+          <div class="notice">
+            Anyone with your share code (and a login) can browse your bucket read-only.
+            Only you can edit your own bucket.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Built for two people. Powered by 🐾 + Supabase + GitHub Pages.</footer>
+  </div>
+
+<script>
+  const SUPABASE_URL = "https://qjkhmmlpjqiugahbxkia.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqa2htbWxwanFpdWdhaGJ4a2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzcwMjMsImV4cCI6MjA4NzY1MzAyM30.igxd3POf-D9kkoLWLVW7VJ315aQhzXDLsMtISlOFegU";
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let session = null;
+  let me = null;
+  let myItems = [];
+  let showDeleted = false;
+
+  let partner = null;
+  let partnerItems = [];
+  let takeEvents = [];
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  function showMsg(text){ $("#msg").textContent = text; $("#msg").classList.remove("hide"); $("#err").classList.add("hide"); }
+  function showErr(text){ $("#err").textContent = text; $("#err").classList.remove("hide"); $("#msg").classList.add("hide"); }
+  function clearMsg(){ $("#msg").classList.add("hide"); $("#err").classList.add("hide"); }
+  function escapeHtml(s){ return (s ?? "").toString().replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c])); }
+  function normalize(s){ return (s ?? "").toString().trim(); }
+  function uniq(arr){ return Array.from(new Set(arr)); }
+  function youtubeSearchUrl(title, artist){
+    const q = [artist, title].filter(Boolean).join(" ").trim();
+    const extra = " subtitles lyrics";
+    return "https://www.youtube.com/results?search_query=" + encodeURIComponent((q + extra).trim());
+  }
+  function openLink(url){ window.open(url, "_blank", "noopener,noreferrer"); }
+
+  function setTab(tab){
+    $$(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    ["my","explore","notify","settings"].forEach(t => $(`#tab-${t}`).classList.toggle("hide", t !== tab));
+    clearMsg();
+    if(tab === "notify") refreshTakeEvents();
+    if(tab === "settings") computeDueBanner();
+  }
+  $("#tabs").addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab");
+    if(btn) setTab(btn.dataset.tab);
+  });
+
+  // ---- Auth
+  async function refreshSession(){
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+
+    if(session){
+      $("#authPanel").classList.add("hide");
+      $("#appGrid").classList.remove("hide");
+      $("#whoami").textContent = "😺 " + session.user.email;
+      $("#signOutBtn").disabled = false;
+
+      await ensureProfile();
+      await loadMyItems();
+      renderMy();
+      computeDueBanner();
+    }else{
+      $("#authPanel").classList.remove("hide");
+      $("#appGrid").classList.add("hide");
+      $("#whoami").textContent = "😺 Not signed in";
+      $("#signOutBtn").disabled = true;
+      me = null; myItems = []; partner = null; partnerItems = []; takeEvents = [];
+    }
+  }
+
+  $("#signInBtn").addEventListener("click", async () => {
+    clearMsg();
+    const email = normalize($("#email").value);
+    const password = $("#password").value;
+    if(!email || !password) return showErr("Please enter email + password.");
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) return showErr(error.message);
+    showMsg("Signed in! 🐾");
+    await refreshSession();
+  });
+
+  $("#signUpBtn").addEventListener("click", async () => {
+    clearMsg();
+    const email = normalize($("#email").value);
+    const password = $("#password").value;
+    if(!email || !password) return showErr("Please enter email + password.");
+    const { error } = await sb.auth.signUp({ email, password });
+    if(error) return showErr(error.message);
+    showMsg("Signed up! If confirmations are enabled, check email. 🐾");
+  });
+
+  $("#signOutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    await refreshSession();
+  });
+
+  sb.auth.onAuthStateChange(() => refreshSession());
+
+  // ---- Profile
+  function randomCode(){
+    const part = () => Math.random().toString(36).slice(2, 8);
+    return ("kitty-" + part() + part()).slice(0, 14);
+  }
+  function setDowChecks(days){
+    $$("#dowGrid input[type=checkbox]").forEach(cb => cb.checked = false);
+    (days || []).forEach(d => {
+      const el = $(`#dowGrid input[value="${d}"]`);
+      if(el) el.checked = true;
+    });
+  }
+  function getDowChecks(){
+    const vals = $$("#dowGrid input[type=checkbox]:checked").map(cb => parseInt(cb.value, 10));
+    return vals.length ? vals : [1];
+  }
+
+  async function ensureProfile(){
+    const user = session.user;
+    const { data: existing, error: e1 } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if(e1) throw e1;
+
+    if(existing){
+      me = existing;
+    }else{
+      const newProfile = {
+        id: user.id,
+        display_name: user.email.split("@")[0],
+        contact_email: user.email,
+        partner_email: null,
+        share_code: randomCode(),
+        update_days: [1],
+        update_frequency: "weekly",
+        last_notified_at: null
+      };
+      const { data: created, error: e2 } = await sb.from("profiles").insert(newProfile).select("*").single();
+      if(e2) throw e2;
+      me = created;
+    }
+
+    $("#displayName").value = me.display_name ?? "";
+    $("#contactEmail").value = me.contact_email ?? session.user.email;
+    $("#partnerEmail").value = me.partner_email ?? "";
+    $("#shareCode").value = me.share_code ?? "";
+    $("#updateFrequency").value = me.update_frequency ?? "weekly";
+    setDowChecks(me.update_days ?? [1]);
+  }
+
+  $("#regenCodeBtn").addEventListener("click", async () => {
+    if(!me) return;
+    const newCode = randomCode();
+    const { data, error } = await sb.from("profiles").update({ share_code: newCode }).eq("id", me.id).select("*").single();
+    if(error) return showErr(error.message);
+    me = data;
+    $("#shareCode").value = me.share_code;
+    showMsg("New share code generated 🐾");
+  });
+
+  $("#saveProfileBtn").addEventListener("click", async () => {
+    if(!me) return;
+    clearMsg();
+    const display_name = normalize($("#displayName").value) || "Meow";
+    const contact_email = normalize($("#contactEmail").value) || session.user.email;
+    const partner_email = normalize($("#partnerEmail").value) || null;
+    const update_frequency = $("#updateFrequency").value || "weekly";
+    const update_days = getDowChecks();
+
+    const { data, error } = await sb
+      .from("profiles")
+      .update({ display_name, contact_email, partner_email, update_frequency, update_days })
+      .eq("id", me.id)
+      .select("*")
+      .single();
+
+    if(error) return showErr(error.message);
+    me = data;
+    showMsg("Profile saved ✨");
+    computeDueBanner();
+  });
+
+  // ---- Scheduling
+  function daysNeeded(freq){
+    if(freq === "biweekly") return 14;
+    if(freq === "every4w") return 28;
+    return 7;
+  }
+  function daysSince(iso){
+    if(!iso) return 99999;
+    const t0 = new Date(iso).getTime();
+    return Math.floor((Date.now() - t0) / 86400000);
+  }
+  function isDueToday(){
+    if(!me) return false;
+    const chosen = me.update_days || [1];
+    const need = daysNeeded(me.update_frequency || "weekly");
+    const today = new Date().getDay();
+    if(!chosen.includes(today)) return false;
+    return daysSince(me.last_notified_at) >= need;
+  }
+  function computeDueBanner(){
+    if(!me) return;
+    const due = isDueToday();
+    const to = me.partner_email ? ("to " + me.partner_email) : "(set partner email in Settings)";
+    $("#dueText").innerHTML = due
+      ? `🐾 Update due ${escapeHtml(to)} — draft your “taken items” email?`
+      : `🐾 Not due right now. (It will re-check next time you open.)`;
+    $("#dueBanner").classList.remove("hide");
+  }
+  $("#dueDraftBtn").addEventListener("click", () => { setTab("notify"); draftUpdateEmail(); });
+  $("#dueSnoozeBtn").addEventListener("click", () => { $("#dueBanner").classList.add("hide"); });
+
+  // ---- Items
+  async function loadMyItems(){
+    const { data, error } = await sb.from("items").select("*").eq("owner", me.id).order("created_at", { ascending: false });
+    if(error) return showErr(error.message);
+    myItems = data || [];
+    buildMyFilters();
+  }
+
+  function buildMyFilters(){
+    const cats = uniq(myItems.map(i => i.category).filter(Boolean)).sort();
+    const $fc = $("#filterCategory");
+    const current = $fc.value || "";
+    $fc.innerHTML = '<option value="">All</option>' + cats.map(c => `<option>${escapeHtml(c)}</option>`).join("");
+    $fc.value = cats.includes(current) ? current : "";
+    buildMySubfilters($fc.value || "");
+  }
+  function buildMySubfilters(cat){
+    const relevant = cat ? myItems.filter(i => i.category === cat) : myItems;
+    const subs = uniq(relevant.map(i => i.subcategory).filter(Boolean)).sort();
+    const $fs = $("#filterSubcategory");
+    $fs.innerHTML = '<option value="">All</option>' + subs.map(s => `<option>${escapeHtml(s)}</option>`).join("");
+  }
+
+  $("#filterCategory").addEventListener("change", (e) => { buildMySubfilters(e.target.value); renderMy(); });
+  $("#filterSubcategory").addEventListener("change", renderMy);
+  $("#search").addEventListener("input", renderMy);
+
+  $("#toggleDeletedBtn").addEventListener("click", () => { showDeleted = !showDeleted; renderMy(); });
+  $("#restoreAllBtn").addEventListener("click", async () => {
+    if(!confirm("Restore ALL deleted items?")) return;
+    const { error } = await sb.from("items").update({ deleted: false }).eq("owner", me.id).eq("deleted", true);
+    if(error) return showErr(error.message);
+    await loadMyItems(); renderMy(); showMsg("Restored ♻️");
+  });
+
+  $("#clearFormBtn").addEventListener("click", () => {
+    $("#category").value=""; $("#subcategory").value=""; $("#type").value="youtube";
+    $("#title").value=""; $("#artist").value=""; $("#year").value=""; $("#url").value=""; $("#description").value="";
+  });
+
+  $("#addBtn").addEventListener("click", async () => {
+    clearMsg();
+    const category = normalize($("#category").value);
+    const subcategory = normalize($("#subcategory").value);
+    const type = $("#type").value;
+    const title = normalize($("#title").value);
+    const artist = normalize($("#artist").value);
+    const year = normalize($("#year").value);
+    const url = normalize($("#url").value);
+    const description = normalize($("#description").value);
+
+    if(!category) return showErr("Category is required.");
+    if(!subcategory) return showErr("Subcategory is required.");
+    if(!title) return showErr("Title is required.");
+
+    const finalUrl = url || (type === "youtube" ? youtubeSearchUrl(title, artist) : "");
+    const payload = {
+      owner: me.id,
+      category, subcategory, type, title,
+      artist: artist || null,
+      year: year || null,
+      url: finalUrl || null,
+      description: description || null,
+      deleted: false,
+      source_item_id: null,
+      source_owner: null
+    };
+
+    const { error } = await sb.from("items").insert(payload);
+    if(error) return showErr(error.message);
+    await loadMyItems(); renderMy(); showMsg("Added 🐾");
+  });
+
+  async function softDeleteItem(id){
+    const { error } = await sb.from("items").update({ deleted: true }).eq("id", id).eq("owner", me.id);
+    if(error) return showErr(error.message);
+    await loadMyItems(); renderMy();
+  }
+  async function restoreItem(id){
+    const { error } = await sb.from("items").update({ deleted: false }).eq("id", id).eq("owner", me.id);
+    if(error) return showErr(error.message);
+    await loadMyItems(); renderMy();
+  }
+  async function updateDescription(id, text){
+    const { error } = await sb.from("items").update({ description: text }).eq("id", id).eq("owner", me.id);
+    if(error) return showErr(error.message);
+    myItems = myItems.map(i => i.id === id ? { ...i, description: text } : i);
+    renderMy();
+  }
+
+  function cardHtml(item, mode){
+    const tag = `${item.category} / ${item.subcategory}`;
+    const metaParts = [];
+    if(item.artist) metaParts.push(item.artist);
+    if(item.year) metaParts.push(item.year);
+    if(item.type) metaParts.push(item.type);
+
+    const safeDesc = escapeHtml(item.description || "");
+    const canOpen = !!item.url;
+    const openLabel = item.type === "youtube" ? "▶️ Watch" : "🔗 Open";
+    const openBtn = canOpen
+      ? `<button class="iconBtn iconGo" data-action="open" data-url="${escapeHtml(item.url)}">${openLabel}</button>`
+      : `<button class="iconBtn" disabled>🚫 No link</button>`;
+
+    const editBtns = (mode === "my") ? `<button class="iconBtn iconOk" data-action="edit">✏️ Edit text</button>` : "";
+    const deleteBtns = (mode === "my") ? (item.deleted
+        ? `<button class="iconBtn iconOk" data-action="restore">♻️ Restore</button>`
+        : `<button class="iconBtn iconDanger" data-action="delete">🗑️ Delete</button>`) : "";
+    const takeBtn = (mode === "partner") ? `<button class="iconBtn iconOk" data-action="take">🐾 Take</button>` : "";
+
+    return `
+      <div class="card" data-id="${escapeHtml(item.id)}">
+        <div class="cardTop">
+          <div>
+            <div class="titleLine">${escapeHtml(item.title)}</div>
+            <div class="meta">${escapeHtml(metaParts.join(" • "))}</div>
+          </div>
+          <div class="tag">🐱 ${escapeHtml(tag)}</div>
+        </div>
+
+        <div class="desc" data-role="desc">${safeDesc}</div>
+
+        <div class="toolbar">
+          ${openBtn}
+          ${takeBtn}
+          ${editBtns}
+          ${deleteBtns}
+        </div>
+
+        <div class="hide" data-role="editbox">
+          <label>Recommend / testimonial / story / essay</label>
+          <textarea data-role="edittext">${safeDesc}</textarea>
+          <div class="row" style="margin-top:8px;">
+            <button class="btn" data-action="saveEdit">💾 Save</button>
+            <button class="btn3" data-action="cancelEdit">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireCardActions(container, mode){
+    container.onclick = async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if(!btn) return;
+      const card = e.target.closest(".card");
+      if(!card) return;
+      const id = card.getAttribute("data-id");
+      const action = btn.getAttribute("data-action");
+
+      if(action === "open"){ const url = btn.getAttribute("data-url"); if(url) openLink(url); return; }
+      if(action === "delete"){ if(!confirm("Delete (hide) this item?")) return; await softDeleteItem(id); return; }
+      if(action === "restore"){ await restoreItem(id); return; }
+      if(action === "edit"){ card.querySelector('[data-role="editbox"]').classList.remove("hide"); return; }
+      if(action === "cancelEdit"){ card.querySelector('[data-role="editbox"]').classList.add("hide"); return; }
+      if(action === "saveEdit"){
+        const text = card.querySelector('[data-role="edittext"]').value;
+        await updateDescription(id, text);
+        card.querySelector('[data-role="editbox"]').classList.add("hide");
+        showMsg("Saved ✨"); return;
+      }
+      if(action === "take" && mode === "partner"){
+        const src = partnerItems.find(i => i.id === id);
+        if(!src) return showErr("Couldn't find that item.");
+        await takeFromPartner(src);
+      }
+    };
+  }
+
+  function renderMy(){
+    const cat = $("#filterCategory").value || "";
+    const sub = $("#filterSubcategory").value || "";
+    const q = normalize($("#search").value).toLowerCase();
+
+    let items = myItems.slice();
+    if(!showDeleted) items = items.filter(i => !i.deleted);
+    if(cat) items = items.filter(i => i.category === cat);
+    if(sub) items = items.filter(i => i.subcategory === sub);
+    if(q){
+      items = items.filter(i => (`${i.title||""} ${i.artist||""} ${i.description||""} ${i.category||""} ${i.subcategory||""}`.toLowerCase()).includes(q));
+    }
+
+    $("#myCards").innerHTML = items.map(i => cardHtml(i, "my")).join("");
+    $("#myEmpty").classList.toggle("hide", items.length !== 0);
+    wireCardActions($("#myCards"), "my");
+  }
+
+  // ---- Partner Explore
+  async function loadPartnerByCode(code){
+    clearMsg();
+    const { data, error } = await sb.from("profiles").select("id,display_name,contact_email,share_code").eq("share_code", code).maybeSingle();
+    if(error) return showErr(error.message);
+    if(!data) return showErr("No profile found for that share code.");
+    if(data.id === me.id) return showErr("That's your share code.");
+
+    partner = data;
+
+    const { data: items, error: e2 } = await sb.from("items").select("*").eq("owner", partner.id).eq("deleted", false).order("created_at", { ascending: false });
+    if(e2) return showErr(e2.message);
+
+    partnerItems = items || [];
+    buildPartnerFilters();
+
+    $("#partnerSummary").classList.remove("hide");
+    $("#partnerSummary").innerHTML = `Loaded <b>${escapeHtml(partner.display_name || "Partner")}</b> 🐾 (<b>${partnerItems.length}</b> items)`;
+    renderPartner();
+    localStorage.setItem("bucketlist_partner_code", code);
+  }
+
+  function buildPartnerFilters(){
+    const cats = uniq(partnerItems.map(i => i.category).filter(Boolean)).sort();
+    $("#pFilterCategory").innerHTML = '<option value="">All</option>' + cats.map(c => `<option>${escapeHtml(c)}</option>`).join("");
+    buildPartnerSubfilters($("#pFilterCategory").value || "");
+  }
+  function buildPartnerSubfilters(cat){
+    const relevant = cat ? partnerItems.filter(i => i.category === cat) : partnerItems;
+    const subs = uniq(relevant.map(i => i.subcategory).filter(Boolean)).sort();
+    $("#pFilterSubcategory").innerHTML = '<option value="">All</option>' + subs.map(s => `<option>${escapeHtml(s)}</option>`).join("");
+  }
+  $("#pFilterCategory").addEventListener("change", (e) => { buildPartnerSubfilters(e.target.value); renderPartner(); });
+  $("#pFilterSubcategory").addEventListener("change", renderPartner);
+  $("#pSearch").addEventListener("input", renderPartner);
+  $("#loadPartnerBtn").addEventListener("click", async () => {
+    const code = normalize($("#partnerCode").value);
+    if(!code) return showErr("Enter a partner share code.");
+    await loadPartnerByCode(code);
+  });
+
+  function renderPartner(){
+    const cat = $("#pFilterCategory").value || "";
+    const sub = $("#pFilterSubcategory").value || "";
+    const q = normalize($("#pSearch").value).toLowerCase();
+
+    let items = partnerItems.slice();
+    if(cat) items = items.filter(i => i.category === cat);
+    if(sub) items = items.filter(i => i.subcategory === sub);
+    if(q) items = items.filter(i => (`${i.title||""} ${i.artist||""} ${i.description||""} ${i.category||""} ${i.subcategory||""}`.toLowerCase()).includes(q));
+
+    $("#partnerCards").innerHTML = items.map(i => cardHtml(i, "partner")).join("");
+    $("#partnerEmpty").classList.toggle("hide", items.length !== 0);
+    wireCardActions($("#partnerCards"), "partner");
+  }
+
+  // ---- Take + events
+  async function takeFromPartner(src){
+    if(!partner) return showErr("No partner loaded.");
+    const payload = {
+      owner: me.id,
+      category: src.category,
+      subcategory: src.subcategory,
+      type: src.type,
+      title: src.title,
+      artist: src.artist,
+      year: src.year,
+      url: src.url,
+      description: src.description,
+      deleted: false,
+      source_item_id: src.id,
+      source_owner: partner.id
+    };
+    const { error: e1 } = await sb.from("items").insert(payload);
+    if(e1) return showErr(e1.message);
+
+    const { error: e2 } = await sb.from("take_events").insert({ taker: me.id, source_owner: partner.id, source_item_id: src.id, notified: false });
+    if(e2) return showErr(e2.message);
+
+    await loadMyItems(); renderMy();
+    showMsg("Taken! Added to your bucket 🐾");
+  }
+
+  $("#refreshEventsBtn").addEventListener("click", refreshTakeEvents);
+  $("#draftEmailBtn").addEventListener("click", draftUpdateEmail);
+  $("#markNotifiedBtn").addEventListener("click", markEventsNotified);
+
+  async function refreshTakeEvents(){
+    if(!me) return;
+    const { data, error } = await sb.from("take_events").select("*").eq("taker", me.id).eq("notified", false).order("created_at", { ascending: true });
+    if(error) return showErr(error.message);
+    takeEvents = data || [];
+
+    if(takeEvents.length === 0){
+      $("#eventsList").innerHTML = "";
+      $("#eventsEmpty").classList.remove("hide");
+      $("#eventsBox").classList.add("hide");
+      return;
+    }
+
+    $("#eventsEmpty").classList.add("hide");
+    $("#eventsBox").classList.remove("hide");
+    $("#eventsBox").innerHTML = `Unnotified takes: <b>${takeEvents.length}</b>. Draft an email and then mark as notified.`;
+
+    // Render using partnerItems if loaded; else minimal
+    const cards = takeEvents.map(e => {
+      const src = partnerItems.find(i => i.id === e.source_item_id) || {};
+      return cardHtml({
+        id: e.id,
+        category: src.category || "Unknown",
+        subcategory: src.subcategory || "Unknown",
+        type: src.type || "item",
+        title: src.title || ("Item " + e.source_item_id.slice(0,6) + "…"),
+        artist: src.artist || "",
+        year: src.year || "",
+        url: src.url || null,
+        description: src.description || ""
+      }, "event");
+    });
+
+    $("#eventsList").innerHTML = cards.join("");
+    $("#eventsList").onclick = (evt) => {
+      const btn = evt.target.closest("button[data-action='open']");
+      if(!btn) return;
+      const url = btn.getAttribute("data-url");
+      if(url) openLink(url);
+    };
+  }
+
+  function buildEmailBody(){
+    const to = me.partner_email || "";
+    const fromName = me.display_name || session.user.email;
+    const now = new Date().toLocaleString();
+    const lines = [];
+    lines.push(`Hi! It's ${fromName} 🐾`);
+    lines.push("");
+    lines.push(`Here are the items I took from your bucket since the last update (${now}):`);
+    lines.push("");
+
+    const grouped = new Map();
+    for(const e of takeEvents){
+      const src = partnerItems.find(i => i.id === e.source_item_id) || null;
+      const cat = src ? src.category : "Unknown";
+      const sub = src ? src.subcategory : "Unknown";
+      const key = `${cat} / ${sub}`;
+      if(!grouped.has(key)) grouped.set(key, []);
+      const title = src ? src.title : `Item ${e.source_item_id.slice(0,6)}…`;
+      const artist = (src && src.artist) ? ` — ${src.artist}` : "";
+      const url = (src && src.url) ? ` (${src.url})` : "";
+      grouped.get(key).push(`- ${title}${artist}${url}`);
+    }
+    for(const [key, items] of grouped.entries()){
+      lines.push(key);
+      items.forEach(it => lines.push(it));
+      lines.push("");
+    }
+    lines.push("Reply with anything you want me to try from mine ✨");
+    lines.push("");
+    lines.push("— sent from bucketlist 🐱");
+
+    const subject = `bucketlist update: items I took (${fromName})`;
+    return { to, subject, body: lines.join("\n") };
+  }
+
+  function draftUpdateEmail(){
+    clearMsg();
+    if(!me.partner_email) return showErr("Set Partner email in Settings first.");
+    if(takeEvents.length === 0) return showErr("No unnotified takes to email yet. Refresh if needed.");
+    const { to, subject, body } = buildEmailBody();
+    const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    openLink(mailto);
+    showMsg("Draft opened in your mail client ✉️");
+  }
+
+  async function markEventsNotified(){
+    clearMsg();
+    if(takeEvents.length === 0) return showErr("Nothing to mark notified.");
+    if(!confirm("Mark ALL current unnotified takes as notified?")) return;
+
+    const ids = takeEvents.map(e => e.id);
+    const { error } = await sb.from("take_events").update({ notified: true }).in("id", ids);
+    if(error) return showErr(error.message);
+
+    const { data, error: e2 } = await sb.from("profiles")
+      .update({ last_notified_at: new Date().toISOString() })
+      .eq("id", me.id)
+      .select("*")
+      .single();
+    if(e2) return showErr(e2.message);
+    me = data;
+
+    showMsg("Marked notified ✅");
+    await refreshTakeEvents();
+    computeDueBanner();
+  }
+
+  (async function init(){
+    const saved = localStorage.getItem("bucketlist_partner_code");
+    if(saved) $("#partnerCode").value = saved;
+
+    try{
+      await refreshSession();
+    }catch(err){
+      showErr("Setup issue. Make sure SUPABASE_URL and SUPABASE_ANON_KEY are set. " + (err?.message || err));
+    }
+  })();
+</script>
+</body>
+</html>

@@ -285,6 +285,14 @@
         </div>
         with your Supabase project settings.
       </div>
+      <div class="sep"></div>
+      <div class="notice">
+        <b>Important:</b> Partner browsing uses <span class="kbd">RPC</span> functions for share-code access:
+        <div style="margin-top:6px">
+          <span class="kbd">get_profile_by_share_code(code text)</span> and <span class="kbd">get_items_by_share_code(code text)</span>
+        </div>
+        Create those in Supabase SQL Editor (security definer) or partner browsing will fail.
+      </div>
     </div>
 
     <div class="grid hide" id="appGrid">
@@ -511,21 +519,30 @@
   </div>
 
 <script>
+  // -----------------------------
+  // CONFIG
+  // -----------------------------
   const SUPABASE_URL = "https://qjkhmmlpjqiugahbxkia.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqa2htbWxwanFpdWdhaGJ4a2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzcwMjMsImV4cCI6MjA4NzY1MzAyM30.igxd3POf-D9kkoLWLVW7VJ315aQhzXDLsMtISlOFegU";
 
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // -----------------------------
+  // STATE
+  // -----------------------------
   let session = null;
   let me = null;
   let myItems = [];
   let showDeleted = false;
 
-  let partner = null;
-  let partnerItems = [];
+  let partner = null;        // {id, display_name, contact_email, share_code} from RPC
+  let partnerItems = [];     // items from RPC
   let takeEvents = [];
 
+  // -----------------------------
+  // HELPERS
+  // -----------------------------
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
@@ -542,6 +559,9 @@
   }
   function openLink(url){ window.open(url, "_blank", "noopener,noreferrer"); }
 
+  // -----------------------------
+  // TABS
+  // -----------------------------
   function setTab(tab){
     $$(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
     ["my","explore","notify","settings"].forEach(t => $(`#tab-${t}`).classList.toggle("hide", t !== tab));
@@ -554,7 +574,9 @@
     if(btn) setTab(btn.dataset.tab);
   });
 
-  // ---- Auth
+  // -----------------------------
+  // AUTH
+  // -----------------------------
   async function refreshSession(){
     const { data } = await sb.auth.getSession();
     session = data.session;
@@ -606,7 +628,9 @@
 
   sb.auth.onAuthStateChange(() => refreshSession());
 
-  // ---- Profile
+  // -----------------------------
+  // PROFILE
+  // -----------------------------
   function randomCode(){
     const part = () => Math.random().toString(36).slice(2, 8);
     return ("kitty-" + part() + part()).slice(0, 14);
@@ -686,7 +710,9 @@
     computeDueBanner();
   });
 
-  // ---- Scheduling
+  // -----------------------------
+  // SCHEDULING
+  // -----------------------------
   function daysNeeded(freq){
     if(freq === "biweekly") return 14;
     if(freq === "every4w") return 28;
@@ -717,7 +743,9 @@
   $("#dueDraftBtn").addEventListener("click", () => { setTab("notify"); draftUpdateEmail(); });
   $("#dueSnoozeBtn").addEventListener("click", () => { $("#dueBanner").classList.add("hide"); });
 
-  // ---- Items
+  // -----------------------------
+  // ITEMS (MY BUCKET)
+  // -----------------------------
   async function loadMyItems(){
     const { data, error } = await sb.from("items").select("*").eq("owner", me.id).order("created_at", { ascending: false });
     if(error) return showErr(error.message);
@@ -904,26 +932,44 @@
     wireCardActions($("#myCards"), "my");
   }
 
-  // ---- Partner Explore
+  // -----------------------------
+  // PARTNER EXPLORE (RPC-BASED)
+  // -----------------------------
+  async function rpcGetProfileByShareCode(code){
+    // Requires function: get_profile_by_share_code(code text)
+    const { data, error } = await sb.rpc("get_profile_by_share_code", { code });
+    if(error) throw error;
+    // Supabase RPC returns array for table-returning functions
+    return Array.isArray(data) ? (data[0] || null) : (data || null);
+  }
+
+  async function rpcGetItemsByShareCode(code){
+    // Requires function: get_items_by_share_code(code text)
+    const { data, error } = await sb.rpc("get_items_by_share_code", { code });
+    if(error) throw error;
+    return data || [];
+  }
+
   async function loadPartnerByCode(code){
     clearMsg();
-    const { data, error } = await sb.from("profiles").select("id,display_name,contact_email,share_code").eq("share_code", code).maybeSingle();
-    if(error) return showErr(error.message);
-    if(!data) return showErr("No profile found for that share code.");
-    if(data.id === me.id) return showErr("That's your share code.");
+    try{
+      const prof = await rpcGetProfileByShareCode(code);
+      if(!prof) return showErr("No profile found for that share code.");
+      if(prof.id === me.id) return showErr("That's your share code.");
 
-    partner = data;
+      partner = prof;
 
-    const { data: items, error: e2 } = await sb.from("items").select("*").eq("owner", partner.id).eq("deleted", false).order("created_at", { ascending: false });
-    if(e2) return showErr(e2.message);
+      const items = await rpcGetItemsByShareCode(code);
+      partnerItems = items || [];
+      buildPartnerFilters();
 
-    partnerItems = items || [];
-    buildPartnerFilters();
-
-    $("#partnerSummary").classList.remove("hide");
-    $("#partnerSummary").innerHTML = `Loaded <b>${escapeHtml(partner.display_name || "Partner")}</b> 🐾 (<b>${partnerItems.length}</b> items)`;
-    renderPartner();
-    localStorage.setItem("bucketlist_partner_code", code);
+      $("#partnerSummary").classList.remove("hide");
+      $("#partnerSummary").innerHTML = `Loaded <b>${escapeHtml(partner.display_name || "Partner")}</b> 🐾 (<b>${partnerItems.length}</b> items)`;
+      renderPartner();
+      localStorage.setItem("bucketlist_partner_code", code);
+    }catch(err){
+      showErr(err?.message || String(err));
+    }
   }
 
   function buildPartnerFilters(){
@@ -960,7 +1006,9 @@
     wireCardActions($("#partnerCards"), "partner");
   }
 
-  // ---- Take + events
+  // -----------------------------
+  // TAKE + EVENTS
+  // -----------------------------
   async function takeFromPartner(src){
     if(!partner) return showErr("No partner loaded.");
     const payload = {
@@ -980,7 +1028,12 @@
     const { error: e1 } = await sb.from("items").insert(payload);
     if(e1) return showErr(e1.message);
 
-    const { error: e2 } = await sb.from("take_events").insert({ taker: me.id, source_owner: partner.id, source_item_id: src.id, notified: false });
+    const { error: e2 } = await sb.from("take_events").insert({
+      taker: me.id,
+      source_owner: partner.id,
+      source_item_id: src.id,
+      notified: false
+    });
     if(e2) return showErr(e2.message);
 
     await loadMyItems(); renderMy();
@@ -991,9 +1044,24 @@
   $("#draftEmailBtn").addEventListener("click", draftUpdateEmail);
   $("#markNotifiedBtn").addEventListener("click", markEventsNotified);
 
+  function findLocalCopyForEvent(ev){
+    // Use YOUR copied item (so we never need to read partner items under RLS)
+    return myItems.find(i => i.source_item_id === ev.source_item_id && i.source_owner === ev.source_owner) || null;
+  }
+
   async function refreshTakeEvents(){
     if(!me) return;
-    const { data, error } = await sb.from("take_events").select("*").eq("taker", me.id).eq("notified", false).order("created_at", { ascending: true });
+
+    // refresh myItems first so event rendering has local copies
+    await loadMyItems();
+
+    const { data, error } = await sb
+      .from("take_events")
+      .select("*")
+      .eq("taker", me.id)
+      .eq("notified", false)
+      .order("created_at", { ascending: true });
+
     if(error) return showErr(error.message);
     takeEvents = data || [];
 
@@ -1008,19 +1076,18 @@
     $("#eventsBox").classList.remove("hide");
     $("#eventsBox").innerHTML = `Unnotified takes: <b>${takeEvents.length}</b>. Draft an email and then mark as notified.`;
 
-    // Render using partnerItems if loaded; else minimal
-    const cards = takeEvents.map(e => {
-      const src = partnerItems.find(i => i.id === e.source_item_id) || {};
+    const cards = takeEvents.map(ev => {
+      const local = findLocalCopyForEvent(ev);
       return cardHtml({
-        id: e.id,
-        category: src.category || "Unknown",
-        subcategory: src.subcategory || "Unknown",
-        type: src.type || "item",
-        title: src.title || ("Item " + e.source_item_id.slice(0,6) + "…"),
-        artist: src.artist || "",
-        year: src.year || "",
-        url: src.url || null,
-        description: src.description || ""
+        id: ev.id,
+        category: local?.category || "Unknown",
+        subcategory: local?.subcategory || "Unknown",
+        type: local?.type || "item",
+        title: local?.title || ("Item " + (ev.source_item_id ? ev.source_item_id.slice(0,6) : "????") + "…"),
+        artist: local?.artist || "",
+        year: local?.year || "",
+        url: local?.url || null,
+        description: local?.description || ""
       }, "event");
     });
 
@@ -1037,6 +1104,7 @@
     const to = me.partner_email || "";
     const fromName = me.display_name || session.user.email;
     const now = new Date().toLocaleString();
+
     const lines = [];
     lines.push(`Hi! It's ${fromName} 🐾`);
     lines.push("");
@@ -1044,22 +1112,26 @@
     lines.push("");
 
     const grouped = new Map();
-    for(const e of takeEvents){
-      const src = partnerItems.find(i => i.id === e.source_item_id) || null;
-      const cat = src ? src.category : "Unknown";
-      const sub = src ? src.subcategory : "Unknown";
+
+    for(const ev of takeEvents){
+      const local = findLocalCopyForEvent(ev);
+      const cat = local?.category || "Unknown";
+      const sub = local?.subcategory || "Unknown";
       const key = `${cat} / ${sub}`;
       if(!grouped.has(key)) grouped.set(key, []);
-      const title = src ? src.title : `Item ${e.source_item_id.slice(0,6)}…`;
-      const artist = (src && src.artist) ? ` — ${src.artist}` : "";
-      const url = (src && src.url) ? ` (${src.url})` : "";
+
+      const title = local?.title || `Item ${(ev.source_item_id ? ev.source_item_id.slice(0,6) : "????")}…`;
+      const artist = local?.artist ? ` — ${local.artist}` : "";
+      const url = local?.url ? ` (${local.url})` : "";
       grouped.get(key).push(`- ${title}${artist}${url}`);
     }
+
     for(const [key, items] of grouped.entries()){
       lines.push(key);
       items.forEach(it => lines.push(it));
       lines.push("");
     }
+
     lines.push("Reply with anything you want me to try from mine ✨");
     lines.push("");
     lines.push("— sent from bucketlist 🐱");
@@ -1092,6 +1164,7 @@
       .eq("id", me.id)
       .select("*")
       .single();
+
     if(e2) return showErr(e2.message);
     me = data;
 
@@ -1100,6 +1173,9 @@
     computeDueBanner();
   }
 
+  // -----------------------------
+  // INIT
+  // -----------------------------
   (async function init(){
     const saved = localStorage.getItem("bucketlist_partner_code");
     if(saved) $("#partnerCode").value = saved;

@@ -191,7 +191,16 @@
     .row{ display:flex; gap: 10px; flex-wrap: wrap; }
     .row > *{ flex: 1; min-width: 140px; }
     .sep{ height: 10px; }
-    .hide{ display:none !important; }
+    .hide{ display:none !importan$("#signInBtn").addEventListener("click", async () => {
+    clearMsg();
+    const email = normalize($("#email").value);
+    const password = $("#password").value;
+    if(!email || !password) return showErr("Please enter email + password.");
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) return showErr(error.message);
+    showMsg("Signed in! 🐾");
+    await refreshSession();
+  });t; }
     footer{ margin-top: 14px; color: var(--muted); font-size: 12px; text-align:center; }
 
     .kbd{
@@ -601,16 +610,25 @@
     }
   }
 
-  $("#signInBtn").addEventListener("click", async () => {
-    clearMsg();
-    const email = normalize($("#email").value);
-    const password = $("#password").value;
-    if(!email || !password) return showErr("Please enter email + password.");
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if(error) return showErr(error.message);
-    showMsg("Signed in! 🐾");
-    await refreshSession();
-  });
+    $("#signInBtn").addEventListener("click", async () => {
+      clearMsg();
+      try {
+        const email = normalize($("#email").value);
+        const password = $("#password").value;
+        if(!email || !password) return showErr("Please enter email + password.");
+  
+        showMsg("Signing in…"); // <-- prove click handler is firing
+  
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if(error) return showErr("Sign-in failed: " + error.message);
+  
+        showMsg("Signed in! 🐾");
+        await refreshSession();
+      } catch (err) {
+        showErr("Sign-in crashed: " + (err?.message || err));
+        console.error(err);
+      }
+    });
 
   $("#signUpBtn").addEventListener("click", async () => {
     clearMsg();

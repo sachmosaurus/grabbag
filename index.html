@@ -6,47 +6,171 @@
     <title>Bucketlists | Structured</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --bg: #f8f9fa; --border: #d1d5db; --text: #1f2937;
-            --accent: #2563eb; --card-bg: #ffffff; --muted: #6b7280;
+        :root{
+          --bg:#f6f7fb;
+          --panel:#ffffff;
+          --ink:#111827;
+          --muted:#6b7280;
+          --border:#e5e7eb;
+        
+          --accent:#2563eb;
+          --accent-2:#1d4ed8;
+        
+          --danger:#dc2626;
+        
+          --radius:14px;
+          --radius-sm:10px;
+          --shadow: 0 8px 26px rgba(17,24,39,.08);
+          --shadow-sm: 0 2px 10px rgba(17,24,39,.06);
         }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
-        .container { max-width: 1200px; margin: 0 auto; }
         
-        /* Header & Nav */
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .nav { display: flex; gap: 10px; margin-bottom: 20px; }
-        .nav button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: 600; }
-        .nav button.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-        /* The Hierarchy Visuals */
-        .small-bucket { background: #eee; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 30px; }
-        .small-bucket-title { font-size: 1.5rem; font-weight: 800; margin-top: 0; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        
-        .tiny-bucket { margin-left: 20px; margin-bottom: 20px; padding-left: 15px; border-left: 3px solid var(--border); }
-        .tiny-bucket-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; color: var(--text); }
-
-        /* The Widget (Card) */
-        .widget-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .widget { 
-            background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; 
-            padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.1s;
+        body{
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          background: var(--bg);
+          color: var(--ink);
+          margin:0;
+          padding:20px;
+          line-height:1.5;
         }
-        .widget:hover { border-color: var(--accent); }
-        .widget-title { font-weight: 700; font-size: 1rem; margin-bottom: 5px; display: block; }
-        .widget-notes { font-size: 0.85rem; color: var(--muted); margin: 8px 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         
-        /* Action Buttons */
-        .actions { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border); background: #f9fafb; cursor: pointer; font-weight: 600; }
-        .btn-grab { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
-        .btn-open { background: var(--accent); color: white; border: none; text-decoration: none; text-align: center; }
-
-        /* Form */
-        .panel { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .hidden { display: none; }
+        .panel{
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 18px;
+          box-shadow: var(--shadow-sm);
+        }
+        
+        /* Buckets: clean, minimal */
+        .small-bucket{
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 18px;
+          margin: 0 0 18px 0;
+          box-shadow: var(--shadow-sm);
+        }
+        
+        .small-bucket-title{
+          font-size: 14px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          margin: 0 0 14px 0;
+          color: var(--muted);
+        }
+        
+        .tiny-bucket{
+          margin: 0 0 16px 0;
+          padding: 12px 0 0 0;
+          border-top: 1px dashed var(--border);
+        }
+        .tiny-bucket:first-of-type{ border-top: none; padding-top: 0; }
+        
+        .tiny-bucket-title{
+          font-size: 16px;
+          font-weight: 800;
+          margin: 0 0 10px 0;
+          color: var(--ink);
+        }
+        
+        .widget-grid{
+          display:grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 12px;
+        }
+        
+        /* The “old feel” card: crisp, not busy */
+        .widget{
+          background: #fff;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 14px;
+          box-shadow: var(--shadow-sm);
+          transition: transform .08s ease, border-color .08s ease, box-shadow .08s ease;
+        }
+        .widget:hover{
+          border-color: rgba(37,99,235,.45);
+          box-shadow: 0 10px 26px rgba(17,24,39,.10);
+          transform: translateY(-1px);
+        }
+        
+        .widget-title{
+          display:block;
+          font-weight: 850;
+          font-size: 15px;
+          margin: 0 0 6px 0;
+          color: var(--ink);
+        }
+        
+        /* optional one-line meta slot if you want later */
+        .widget-meta{
+          font-size: 12px;
+          color: var(--muted);
+          margin: 0 0 8px 0;
+        }
+        
+        .widget-notes{
+          font-size: 13px;
+          color: #374151;
+          margin: 0;
+          line-height: 1.45;
+          white-space: pre-wrap;
+        
+          /* clamp like before */
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .actions{
+          display:flex;
+          gap: 8px;
+          align-items:center;
+          margin-top: 12px;
+          flex-wrap: wrap;
+        }
+        
+        /* unified “button chip” system */
+        .btn-sm{
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:6px;
+          padding: 8px 10px;
+          font-size: 12px;
+          font-weight: 800;
+          border-radius: 10px;
+          border: 1px solid var(--border);
+          background: #f9fafb;
+          color: var(--ink);
+          cursor:pointer;
+          text-decoration:none;
+          user-select:none;
+        }
+        
+        .btn-sm:hover{ filter: brightness(0.98); }
+        .btn-sm:active{ transform: translateY(1px); }
+        
+        .btn-open{
+          background: var(--accent);
+          border-color: rgba(37,99,235,.35);
+          color: white;
+        }
+        .btn-open:hover{ background: var(--accent-2); }
+        
+        .btn-grab{
+          background: rgba(37,99,235,.08);
+          border-color: rgba(37,99,235,.25);
+          color: var(--accent-2);
+        }
+        
+        .btn-danger{
+          background: rgba(220,38,38,.08);
+          border-color: rgba(220,38,38,.25);
+          color: var(--danger);
+        }
     </style>
 </head>
 <body>
@@ -110,6 +234,16 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let sessionUser = null;
+
+    function escapeHtml(s){
+      return (s ?? "").toString().replace(/[&<>"']/g, c => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+      }[c]));
+    }
+    function escapeAttr(s){
+      // same as escapeHtml but kept separate for clarity
+      return escapeHtml(s);
+    }
 
     async function checkUser() {
         const { data } = await sb.auth.getUser();
@@ -198,14 +332,20 @@
                 
                 tItems.forEach(item => {
                     grid.innerHTML += `
-                        <div class="widget">
-                            <span class="widget-title">${item.title}</span>
-                            <div class="widget-notes">${item.notes || 'No notes.'}</div>
-                            <div class="actions">
-                                ${item.url ? `<a href="${item.url}" target="_blank" class="btn-sm btn-open">Open Link</a>` : ''}
-                                ${!isOwner ? `<button class="btn-sm btn-grab" onclick="grab('${item.id}')">Grab 🐾</button>` : `<button class="btn-sm" onclick="deleteItem('${item.id}')">Delete</button>`}
-                            </div>
+                      <div class="widget">
+                        <span class="widget-title">${escapeHtml(item.title || "Untitled")}</span>
+                        <div class="widget-notes">${escapeHtml(item.notes || "No notes.")}</div>
+                    
+                        <div class="actions">
+                          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener noreferrer" class="btn-sm btn-open">Open</a>` : ``}
+                    
+                          ${
+                            !isOwner
+                              ? `<button class="btn-sm btn-grab" onclick="grab('${escapeAttr(item.id)}')">Grab</button>`
+                              : `<button class="btn-sm btn-danger" onclick="deleteItem('${escapeAttr(item.id)}')">Delete</button>`
+                          }
                         </div>
+                      </div>
                     `;
                 });
                 tDiv.appendChild(grid);

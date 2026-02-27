@@ -1,225 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grab Bags</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grab Bag | Structured</title>
 
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --bg: #f8f9fa; --border: #d1d5db; --text: #1f2937;
-            --accent: #2563eb; --card-bg: #ffffff; --muted: #6b7280;
-        }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
-        .container { max-width: 1200px; margin: 0 auto; }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        /* Header & Nav */
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .nav { display: flex; gap: 10px; margin-bottom: 20px; }
-        .nav button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: 600; }
-        .nav button.active { background: var(--accent); color: white; border-color: var(--accent); }
+  <style>
+    :root {
+      --bg: #f8f9fa; --border: #d1d5db; --text: #1f2937;
+      --accent: #2563eb; --card-bg: #ffffff; --muted: #6b7280;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
+    .container { max-width: 1200px; margin: 0 auto; }
 
-        /* The Hierarchy Visuals */
-        .small-bucket { background: #eee; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 30px; }
-        .small-bucket-title { font-size: 1.5rem; font-weight: 800; margin-top: 0; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+    /* Header & Nav */
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+    header h1 { margin: 0; }
+    .nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .nav button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: 600; }
+    .nav button.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        .tiny-bucket { margin-left: 20px; margin-bottom: 20px; padding-left: 15px; border-left: 3px solid var(--border); }
-        .tiny-bucket-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; color: var(--text); }
+    /* The Hierarchy Visuals */
+    .small-bucket { background: #eee; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 30px; }
+    .small-bucket-title { font-size: 1.2rem; font-weight: 800; margin-top: 0; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* The Widget (Card) */
-        .widget-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .widget{
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
-            transform-origin: center;
-        }
-        .widget:hover{
-            border-color: var(--accent);
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-        }
-        .widget-title { font-weight: 700; font-size: 1rem; margin-bottom: 5px; display: block; }
-        .widget-title::before{ content: ""; margin-right: 8px; }
-        .widget:hover .widget-title::before{ content: "✋"; }
+    .tiny-bucket { margin-left: 20px; margin-bottom: 20px; padding-left: 15px; border-left: 3px solid var(--border); }
+    .tiny-bucket-title { font-size: 1.0rem; font-weight: 700; margin-bottom: 15px; color: var(--text); }
 
-        .widget-notes { font-size: 0.85rem; color: var(--muted); margin: 8px 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    /* The Widget (Card) */
+    .widget-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    .widget {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+      cursor: grab; /* ✅ cursor change */
+      transform-origin: center;
+    }
+    .widget:hover {
+      border-color: var(--accent);
+      transform: scale(1.05); /* slightly exaggerated hover */
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    .widget:active { cursor: grabbing; } /* ✅ cursor change */
 
-        /* Action Buttons */
-        .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border); background: #f9fafb; cursor: pointer; font-weight: 600; }
-        .btn-grab { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
-        .btn-open { background: var(--accent); color: white; border: none; text-decoration: none; text-align: center; }
+    .widget-title { font-weight: 700; font-size: 1rem; margin-bottom: 5px; display: block; }
+    .widget-notes { font-size: 0.85rem; color: var(--muted); margin: 8px 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* Form */
-        .panel { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .hidden { display: none; }
+    /* Action Buttons */
+    .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn-sm { padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: #f9fafb; cursor: pointer; font-weight: 600; }
+    .btn-grab { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+    .btn-open { background: var(--accent); color: white; border: none; text-decoration: none; text-align: center; }
 
-        /* Modal */
-        .modal-backdrop{
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,.35);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          z-index: 9999;
-        }
-        .modal-backdrop.hidden { display: none; } /* must come after .modal-backdrop{} */
-        .modal{
-          width: min(720px, 96vw);
-          background: white;
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          box-shadow: 0 20px 60px rgba(0,0,0,.18);
-          overflow: hidden;
-        }
-        .modal-header{
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          gap: 12px;
-          padding: 14px 16px;
-          border-bottom: 1px solid var(--border);
-        }
-        .modal-title{ font-weight: 800; margin: 0; }
-        .modal-close{
-          border: 1px solid var(--border);
-          background: #fff;
-          border-radius: 8px;
-          padding: 6px 10px;
-          cursor: pointer;
-          font-weight: 700;
-        }
-        .modal-body{ padding: 16px; }
-        .modal-row{
-          display:grid;
-          grid-template-columns: 140px 1fr;
-          gap: 10px;
-          margin-bottom: 10px;
-        }
-        .modal-label{
-          font-weight: 700;
-          color: var(--muted);
-          font-size: 0.9rem;
-        }
-        .modal-value{
-          color: var(--text);
-          word-break: break-word;
-        }
-        .modal-actions{
-          display:flex;
-          gap: 10px;
-          justify-content:flex-end;
-          padding: 14px 16px;
-          border-top: 1px solid var(--border);
-        }
-        .btn-primary{
-          background: var(--accent);
-          color: white;
-          border: none;
-        }
+    /* Form */
+    .panel { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+    .hidden { display: none; }
 
-        /* jQuery UI autocomplete dropdown (keep it clean) */
-        .ui-autocomplete{
-          max-height: 240px;
-          overflow-y: auto;
-          overflow-x: hidden;
-          border-radius: 10px;
-          box-shadow: 0 12px 30px rgba(0,0,0,.10);
-          border: 1px solid var(--border);
-          background: white;
-        }
-        .ui-menu-item-wrapper{ padding: 8px 10px; }
-        .ui-state-active{ background: rgba(37,99,235,.12) !important; border: none !important; }
-    </style>
+    /* Modal */
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+    .modal-backdrop.hidden { display: none; }
+    .modal{
+      width: min(720px, 96vw);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+      overflow: hidden;
+    }
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title{
+      font-weight: 800;
+      margin: 0;
+    }
+    .modal-close{
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .modal-body{ padding: 16px; }
+    .modal-row{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .modal-label{
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .modal-value{
+      color: var(--text);
+      word-break: break-word;
+    }
+    .modal-actions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .btn-primary{
+      background: var(--accent);
+      color: white;
+      border: none;
+    }
+  </style>
 </head>
-<body>
 
-<div class="container">
+<body>
+  <div class="container">
     <header>
-        <h1 id="pageTitle">grab_bags</h1>
-        <div id="userInfo" class="btn-sm">Checking session...</div>
+      <!-- ✅ this becomes "<username>'s Grab Bag" -->
+      <h1 id="siteTitle">Grab Bag</h1>
+
+      <!-- ✅ show username (not email) -->
+      <div id="userInfo" class="btn-sm">Checking session...</div>
     </header>
 
     <div id="authPanel" class="panel hidden">
-        <h3>Sign In</h3>
-        <input type="email" id="email" placeholder="Email" style="margin-bottom:10px">
-        <input type="password" id="password" placeholder="Password" style="margin-bottom:10px">
-        <button class="nav active" onclick="signIn()">Login</button>
+      <h3>Sign In</h3>
+      <input type="email" id="email" placeholder="Email" style="margin-bottom:10px">
+      <input type="password" id="password" placeholder="Password" style="margin-bottom:10px">
+      <button class="nav active" onclick="signIn()">Login</button>
     </div>
 
     <div id="appPanel" class="hidden">
-        <div class="nav">
-            <button id="btn-my" class="active" onclick="showTab('my')">My Grab Bag</button>
-            <button id="btn-explore" onclick="showTab('explore')">Explore Grabs</button>
-            <button id="btn-logs" onclick="showTab('logs')">Grab Log</button>
-            <button onclick="signOut()">Logout</button>
-        </div>
+      <div class="nav">
+        <button id="btn-my" class="active" onclick="showTab('my')">My Grab Bag</button>
+        <button id="btn-explore" onclick="showTab('explore')">Explore</button>
+        <button id="btn-logs" onclick="showTab('logs')">Grab Logs</button>
+        <button onclick="signOut()">Logout</button>
+      </div>
 
-        <div id="tab-my">
-            <div class="panel">
-                <h4>Add New Grab</h4>
-                <div class="input-group">
-                    <input id="smallB" placeholder="Medium Bag (e.g. Music)">
-                    <input id="tinyB" placeholder="Small Bag (e.g. Melancholic)">
-                </div>
-                <input id="title" placeholder="Grab Title" style="margin-bottom:10px">
-                <input id="url" placeholder="URL (https://...)" style="margin-bottom:10px">
-                <textarea id="notes" placeholder="Notes..."></textarea>
-                <button class="btn-sm" style="background:var(--accent); color:white; width:100%; margin-top:10px" onclick="addItem()">Add to Grab Bag</button>
-            </div>
-            <div id="myBucketRender"></div>
+      <div id="tab-my">
+        <div class="panel">
+          <h4>Add New Grab</h4>
+          <div class="input-group">
+            <input id="smallB" placeholder="Medium Bag (e.g. Music)">
+            <input id="tinyB" placeholder="Small Bag (e.g. Melancholic)">
+          </div>
+          <input id="title" placeholder="Grab Title" style="margin-bottom:10px">
+          <input id="url" placeholder="URL (https://...)" style="margin-bottom:10px">
+          <textarea id="notes" placeholder="Notes..."></textarea>
+          <button class="btn-sm" style="background:var(--accent); color:white; width:100%; margin-top:10px" onclick="addItem()">Add to Grab Bag</button>
         </div>
+        <div id="myBucketRender"></div>
+      </div>
 
-        <div id="tab-explore" class="hidden">
-            <div class="panel">
-                <input type="text" id="partnerSearch" placeholder="Search partner email..." oninput="loadExplore()">
-            </div>
-            <div id="exploreRender"></div>
+      <div id="tab-explore" class="hidden">
+        <div class="panel">
+          <!-- NOTE: still searches by owner_email in DB; UI label says "Search" -->
+          <input type="text" id="partnerSearch" placeholder="Search partner (email filter, for now)..." oninput="loadExplore()">
         </div>
+        <div id="exploreRender"></div>
+      </div>
 
-        <div id="tab-logs" class="hidden">
-            <div class="panel">
-                <h4 id="logTitle">Recent Grabs</h4>
-                <div id="logList"></div>
-                <!-- Removed: Email Log to Partner -->
-            </div>
+      <div id="tab-logs" class="hidden">
+        <div class="panel">
+          <h4 id="logTitle">Recent Grabs</h4>
+          <div id="logList"></div>
+
+          <!-- ✅ removed the email button (per your earlier request) -->
+          <!-- <button class="btn-sm" onclick="sendEmailReport()" style="margin-top:15px">📧 Email Log to Partner</button> -->
         </div>
+      </div>
     </div>
-</div>
-
-<!-- Info / Edit Modal -->
-<div id="infoModal" class="modal-backdrop hidden" onclick="modalBackdropClick(event)">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-header">
-      <h3 class="modal-title" id="modalTitle">Item</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-
-    <div class="modal-body" id="modalBody"></div>
-    <div class="modal-actions" id="modalActions"></div>
   </div>
-</div>
 
-<script>
+  <!-- Info / Edit Modal -->
+  <div id="infoModal" class="modal-backdrop hidden" onclick="modalBackdropClick(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Item</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <script>
     const SUPABASE_URL = "https://qjkhmmlpjqiugahbxkia.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqa2htbWxwanFpdWdhaGJ4a2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzcwMjMsImV4cCI6MjA4NzY1MzAyM30.igxd3POf-D9kkoLWLVW7VJ315aQhzXDLsMtISlOFegU";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let lastRenderedById = new Map();
     let sessionUser = null;
+
+    // ✅ username: minimal, stable, no schema changes required
+    // Use email prefix as the username everywhere in the UI + logs.
+    function usernameFromEmail(email){
+      const s = (email || "").toString();
+      if(!s.includes("@")) return s || "user";
+      return s.split("@")[0] || "user";
+    }
 
     function escapeHtml(s){
       return (s ?? "").toString().replace(/[&<>"']/g, c => ({
@@ -228,60 +231,21 @@
     }
     function escapeAttr(s){ return escapeHtml(s); }
 
-    // -----------------------------
-    // AUTOCOMPLETE (jQuery UI)
-    // -----------------------------
-    let autocompleteMedium = [];
-    let autocompleteSmall = [];
-
-    function uniqSorted(arr){
-      return Array.from(new Set(arr.filter(Boolean).map(s => (""+s).trim()).filter(Boolean)))
-        .sort((a,b)=>a.localeCompare(b));
-    }
-
-    async function refreshAutocompleteSources(){
-      // Uses whatever rows the current RLS allows you to read.
-      // If you later lock explore down, switch this to "my items only".
-      const { data, error } = await sb
-        .from("items")
-        .select("small_bucket, tiny_bucket");
-
-      if(error){
-        console.warn("Autocomplete load failed:", error.message);
-        return;
-      }
-
-      autocompleteMedium = uniqSorted((data || []).map(r => r.small_bucket));
-      autocompleteSmall  = uniqSorted((data || []).map(r => r.tiny_bucket));
-
-      $("#smallB").autocomplete({ source: autocompleteMedium, minLength: 0 });
-      $("#tinyB").autocomplete({ source: autocompleteSmall, minLength: 0 });
-
-      // Dropdown-on-focus behavior
-      $("#smallB").off("focus.autodrop").on("focus.autodrop", function(){ $(this).autocomplete("search", ""); });
-      $("#tinyB").off("focus.autodrop").on("focus.autodrop", function(){ $(this).autocomplete("search", ""); });
-    }
-
-    // -----------------------------
-    // MODAL
-    // -----------------------------
+    // Modal state
     let modalItem = null;
     let modalIsOwner = false;
 
     function openModal(item, isOwner){
       modalItem = item;
       modalIsOwner = isOwner;
-
       document.getElementById("infoModal").classList.remove("hidden");
       renderModal();
     }
-
     function closeModal(){
       document.getElementById("infoModal").classList.add("hidden");
       modalItem = null;
       modalIsOwner = false;
     }
-
     function modalBackdropClick(e){
       if(e.target && e.target.id === "infoModal") closeModal();
     }
@@ -307,7 +271,6 @@
           <div class="modal-row"><div class="modal-label">Link</div><div class="modal-value">${urlHtml}</div></div>
           <div class="modal-row"><div class="modal-label">Info</div><div class="modal-value">${escapeHtml(modalItem.notes || "No notes.")}</div></div>
         `;
-
         actions.innerHTML = `
           ${modalItem.url ? `<a class="btn-sm btn-open" href="${escapeAttr(modalItem.url)}" target="_blank" rel="noopener noreferrer">Open Link</a>` : ``}
           <button class="btn-sm" onclick="closeModal()">Close</button>
@@ -330,7 +293,6 @@
             <div><textarea id="m_notes" style="min-height:120px">${escapeHtml(modalItem.notes || "")}</textarea></div>
           </div>
         `;
-
         actions.innerHTML = `
           <button class="btn-sm btn-primary" onclick="saveModalEdits()">Save</button>
           <button class="btn-sm" onclick="closeModal()">Cancel</button>
@@ -361,27 +323,23 @@
 
       closeModal();
       loadMyItems();
-      refreshAutocompleteSources();
     }
 
-    // -----------------------------
-    // AUTH / NAV
-    // -----------------------------
     async function checkUser() {
       const { data } = await sb.auth.getUser();
       sessionUser = data?.user;
 
-      if (sessionUser) {
+      if(sessionUser) {
         document.getElementById('appPanel').classList.remove('hidden');
         document.getElementById('authPanel').classList.add('hidden');
-        document.getElementById('userInfo').innerText = sessionUser.email;
 
-        const name = (sessionUser.email || "someone").split("@")[0];
-        document.getElementById("pageTitle").innerText = `${name}'s Grab Bag`;
-        document.title = `${name}'s Grab Bag`;
+        const uname = usernameFromEmail(sessionUser.email);
+        document.getElementById('userInfo').innerText = uname;                 // ✅ username, not email
+        document.getElementById('siteTitle').innerText = `${uname}'s Grab Bag`; // ✅ title
 
+        await loadMyItems();
+        // autocompletes depend on data, so do them after first load
         await refreshAutocompleteSources();
-        loadMyItems();
       } else {
         document.getElementById('authPanel').classList.remove('hidden');
       }
@@ -394,7 +352,10 @@
       if (error) alert(error.message); else location.reload();
     }
 
-    async function signOut() { await sb.auth.signOut(); location.reload(); }
+    async function signOut() {
+      await sb.auth.signOut();
+      location.reload();
+    }
 
     function showTab(tab) {
       ['my', 'explore', 'logs'].forEach(t => {
@@ -403,17 +364,15 @@
       });
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
       document.getElementById(`btn-${tab}`).classList.add('active');
+
       if(tab === 'explore') loadExplore();
       if(tab === 'logs') loadLogs();
     }
 
-    // -----------------------------
-    // CRUD
-    // -----------------------------
     async function addItem() {
       const payload = {
         owner_id: sessionUser.id,
-        owner_email: sessionUser.email,
+        owner_email: sessionUser.email, // keeping for compatibility / search
         small_bucket: document.getElementById('smallB').value || "General",
         tiny_bucket: document.getElementById('tinyB').value || "Misc",
         title: document.getElementById('title').value,
@@ -421,25 +380,27 @@
         notes: document.getElementById('notes').value
       };
 
-      const { error } = await sb.from('items').insert([payload]);
-      if(error) return alert(error.message);
+      await sb.from('items').insert([payload]);
 
+      // clear inputs (optional but nice)
+      document.getElementById('title').value = "";
+      document.getElementById('url').value = "";
+      document.getElementById('notes').value = "";
+
+      await loadMyItems();
       await refreshAutocompleteSources();
-      loadMyItems();
     }
 
     async function loadMyItems() {
-      const { data, error } = await sb.from('items').select('*').eq('owner_id', sessionUser.id);
-      if(error) return alert(error.message);
+      const { data } = await sb.from('items').select('*').eq('owner_id', sessionUser.id);
       renderBucket(data || [], 'myBucketRender', true);
     }
 
     async function loadExplore() {
       const search = document.getElementById('partnerSearch').value;
       let query = sb.from('items').select('*').neq('owner_id', sessionUser.id);
-      if (search) query = query.ilike('owner_email', `%${search}%`);
-      const { data, error } = await query;
-      if(error) return alert(error.message);
+      if (search) query = query.ilike('owner_email', `%${search}%`); // unchanged (DB has email)
+      const { data } = await query;
       renderBucket(data || [], 'exploreRender', false);
     }
 
@@ -502,13 +463,17 @@
       const { data: item, error: e1 } = await sb.from('items').select('*').eq('id', id).single();
       if(e1) return alert(e1.message);
 
+      // ✅ log username not email (still stored in grabber_name column for compatibility)
+      const grabberUsername = usernameFromEmail(sessionUser.email);
+
       const { error: e2 } = await sb.from('grab_logs').insert([{
-        grabber_name: sessionUser.email,
+        grabber_name: grabberUsername,   // ✅ username stored
         owner_id: item.owner_id,
         item_title: item.title
       }]);
       if(e2) return alert(e2.message);
 
+      // Copy into my grab bag WITHOUT the owner's personal note
       const payload = {
         owner_id: sessionUser.id,
         owner_email: sessionUser.email,
@@ -516,35 +481,62 @@
         tiny_bucket: item.tiny_bucket || "Misc",
         title: item.title,
         url: item.url || null,
-        notes: "" // do not copy their personal note
+        notes: "" // do not copy their note
       };
 
       const { error: e3 } = await sb.from('items').insert([payload]);
       if(e3) return alert(e3.message);
 
-      await refreshAutocompleteSources();
-      alert("Grabbed into your bag (without their note).");
+      alert("Grabbed into your grab bag (without their note).");
+      // refresh my list if I'm on My tab
+      if(!document.getElementById("tab-my").classList.contains("hidden")){
+        await loadMyItems();
+        await refreshAutocompleteSources();
+      }
     }
 
     async function deleteItem(id) {
-      const { error } = await sb.from('items').delete().eq('id', id).eq('owner_id', sessionUser.id);
-      if(error) return alert(error.message);
+      await sb.from('items').delete().eq('id', id);
+      await loadMyItems();
       await refreshAutocompleteSources();
-      loadMyItems();
     }
 
     async function loadLogs() {
-      const { data, error } = await sb.from('grab_logs').select('*').eq('owner_id', sessionUser.id).order('created_at', { ascending: false });
-      if(error) return alert(error.message);
-
+      const { data } = await sb.from('grab_logs').select('*').eq('owner_id', sessionUser.id).order('created_at', { ascending: false });
       const list = document.getElementById('logList');
+
+      (data || []).forEach(l => {
+        // If old rows still have emails, display username anyway:
+        const displayGrabber = usernameFromEmail(l.grabber_name || "");
+        l.__displayGrabber = displayGrabber;
+      });
+
       list.innerHTML = (data || []).map(l =>
-        `<div style="padding:10px; border-bottom:1px solid #eee"><b>${escapeHtml(l.grabber_name)}</b> grabbed "<b>${escapeHtml(l.item_title)}</b>" on ${new Date(l.created_at).toLocaleDateString()}</div>`
+        `<div style="padding:10px; border-bottom:1px solid #eee">
+          <b>${escapeHtml(l.__displayGrabber || "someone")}</b> grabbed "<b>${escapeHtml(l.item_title || "")}</b>"
+          on ${new Date(l.created_at).toLocaleDateString()}
+        </div>`
       ).join('');
     }
 
-    // INIT
+    // ✅ autocomplete sources for Medium Bag + Small Bag (from YOUR items)
+    async function refreshAutocompleteSources(){
+      if(!sessionUser) return;
+
+      const { data } = await sb.from('items').select('small_bucket,tiny_bucket').eq('owner_id', sessionUser.id);
+      const rows = data || [];
+
+      const mediumBags = Array.from(new Set(rows.map(r => (r.small_bucket || "").trim()).filter(Boolean))).sort();
+      const smallBags  = Array.from(new Set(rows.map(r => (r.tiny_bucket  || "").trim()).filter(Boolean))).sort();
+
+      $("#smallB").autocomplete({ source: mediumBags, minLength: 0 })
+        .on("focus", function(){ $(this).autocomplete("search", $(this).val()); });
+
+      $("#tinyB").autocomplete({ source: smallBags, minLength: 0 })
+        .on("focus", function(){ $(this).autocomplete("search", $(this).val()); });
+    }
+
     checkUser();
-</script>
+  </script>
 </body>
 </html>

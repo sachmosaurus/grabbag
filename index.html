@@ -47,6 +47,81 @@
         .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
         .hidden { display: none; }
+        
+        /* Modal */
+        .modal-backdrop{
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.35);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          z-index: 9999;
+        }
+        .modal{
+          width: min(720px, 96vw);
+          background: white;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          box-shadow: 0 20px 60px rgba(0,0,0,.18);
+          overflow: hidden;
+        }
+        .modal-header{
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap: 12px;
+          padding: 14px 16px;
+          border-bottom: 1px solid var(--border);
+        }
+        .modal-title{
+          font-weight: 800;
+          margin: 0;
+        }
+        .modal-close{
+          border: 1px solid var(--border);
+          background: #fff;
+          border-radius: 8px;
+          padding: 6px 10px;
+          cursor: pointer;
+          font-weight: 700;
+        }
+        .modal-body{
+          padding: 16px;
+        }
+        .modal-row{
+          display:grid;
+          grid-template-columns: 140px 1fr;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .modal-label{
+          font-weight: 700;
+          color: var(--muted);
+          font-size: 0.9rem;
+        }
+        .modal-value{
+          color: var(--text);
+          word-break: break-word;
+        }
+        .modal-actions{
+          display:flex;
+          gap: 10px;
+          justify-content:flex-end;
+          padding: 14px 16px;
+          border-top: 1px solid var(--border);
+        }
+        .btn-primary{
+          background: var(--accent);
+          color: white;
+          border: none;
+        }
+        .btn-danger{
+          background: #fee2e2;
+          color: #991b1b;
+          border-color: #fecaca;
+        }
     </style>
 </head>
 <body>
@@ -104,12 +179,137 @@
     </div>
 </div>
 
+<!-- Info / Edit Modal -->
+<div id="infoModal" class="modal-backdrop hidden" onclick="modalBackdropClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Item</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body" id="modalBody"></div>
+
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
 <script>
     const SUPABASE_URL = "https://qjkhmmlpjqiugahbxkia.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqa2htbWxwanFpdWdhaGJ4a2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzcwMjMsImV4cCI6MjA4NzY1MzAyM30.igxd3POf-D9kkoLWLVW7VJ315aQhzXDLsMtISlOFegU";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let lastRenderedById = new Map();
     let sessionUser = null;
+
+    function escapeHtml(s){
+    return (s ?? "").toString().replace(/[&<>"']/g, c => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+      }[c]));
+    }
+    function escapeAttr(s){ return escapeHtml(s); }
+    
+    // Modal state
+    let modalItem = null;
+    let modalIsOwner = false;
+    
+    function openModal(item, isOwner){
+      modalItem = item;
+      modalIsOwner = isOwner;
+    
+      document.getElementById("infoModal").classList.remove("hidden");
+      renderModal();
+    }
+    
+    function closeModal(){
+      document.getElementById("infoModal").classList.add("hidden");
+      modalItem = null;
+      modalIsOwner = false;
+    }
+    
+    function modalBackdropClick(e){
+      // close only if you click the dim background, not the modal box
+      if(e.target && e.target.id === "infoModal") closeModal();
+    }
+    
+    function renderModal(){
+      if(!modalItem) return;
+    
+      const title = modalIsOwner ? "Edit Info" : "View Info";
+      document.getElementById("modalTitle").textContent = title;
+    
+      const body = document.getElementById("modalBody");
+      const actions = document.getElementById("modalActions");
+    
+      const urlHtml = modalItem.url
+        ? `<a href="${escapeAttr(modalItem.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(modalItem.url)}</a>`
+        : `<span class="modal-value" style="color:var(--muted)">No link</span>`;
+    
+      if(!modalIsOwner){
+        // VIEW MODE (partner viewing)
+        body.innerHTML = `
+          <div class="modal-row"><div class="modal-label">Title</div><div class="modal-value">${escapeHtml(modalItem.title || "")}</div></div>
+          <div class="modal-row"><div class="modal-label">Small Bucket</div><div class="modal-value">${escapeHtml(modalItem.small_bucket || "")}</div></div>
+          <div class="modal-row"><div class="modal-label">Tiny Bucket</div><div class="modal-value">${escapeHtml(modalItem.tiny_bucket || "")}</div></div>
+          <div class="modal-row"><div class="modal-label">Link</div><div class="modal-value">${urlHtml}</div></div>
+          <div class="modal-row"><div class="modal-label">Info</div><div class="modal-value">${escapeHtml(modalItem.notes || "No notes.")}</div></div>
+        `;
+    
+        actions.innerHTML = `
+          ${modalItem.url ? `<a class="btn-sm btn-open" href="${escapeAttr(modalItem.url)}" target="_blank" rel="noopener noreferrer">Open Link</a>` : ``}
+          <button class="btn-sm" onclick="closeModal()">Close</button>
+        `;
+      }else{
+        // EDIT MODE (owner)
+        body.innerHTML = `
+          <div class="modal-row"><div class="modal-label">Title</div>
+            <div><input id="m_title" value="${escapeAttr(modalItem.title || "")}"></div>
+          </div>
+          <div class="modal-row"><div class="modal-label">Small Bucket</div>
+            <div><input id="m_small" value="${escapeAttr(modalItem.small_bucket || "")}"></div>
+          </div>
+          <div class="modal-row"><div class="modal-label">Tiny Bucket</div>
+            <div><input id="m_tiny" value="${escapeAttr(modalItem.tiny_bucket || "")}"></div>
+          </div>
+          <div class="modal-row"><div class="modal-label">URL</div>
+            <div><input id="m_url" value="${escapeAttr(modalItem.url || "")}"></div>
+          </div>
+          <div class="modal-row"><div class="modal-label">Notes</div>
+            <div><textarea id="m_notes" style="min-height:120px">${escapeHtml(modalItem.notes || "")}</textarea></div>
+          </div>
+        `;
+    
+        actions.innerHTML = `
+          <button class="btn-sm btn-primary" onclick="saveModalEdits()">Save</button>
+          <button class="btn-sm" onclick="closeModal()">Cancel</button>
+        `;
+      }
+    }
+    
+    async function saveModalEdits(){
+      if(!modalItem) return;
+    
+      const patch = {
+        title: document.getElementById("m_title").value.trim(),
+        small_bucket: document.getElementById("m_small").value.trim() || "General",
+        tiny_bucket: document.getElementById("m_tiny").value.trim() || "Misc",
+        url: document.getElementById("m_url").value.trim() || null,
+        notes: document.getElementById("m_notes").value
+      };
+    
+      // basic guard
+      if(!patch.title) return alert("Title is required.");
+    
+      const { error } = await sb
+        .from("items")
+        .update(patch)
+        .eq("id", modalItem.id)
+        .eq("owner_id", sessionUser.id);
+    
+      if(error) return alert(error.message);
+    
+      closeModal();
+      loadMyItems(); // refresh owner view
+    }
 
     async function checkUser() {
         const { data } = await sb.auth.getUser();
@@ -172,6 +372,7 @@
     }
 
     function renderBucket(items, targetId, isOwner) {
+        lastRenderedById = new Map(items.map(i => [i.id, i]));
         const container = document.getElementById(targetId);
         container.innerHTML = "";
 
@@ -198,14 +399,23 @@
                 
                 tItems.forEach(item => {
                     grid.innerHTML += `
-                        <div class="widget">
-                            <span class="widget-title">${item.title}</span>
-                            <div class="widget-notes">${item.notes || 'No notes.'}</div>
-                            <div class="actions">
-                                ${item.url ? `<a href="${item.url}" target="_blank" class="btn-sm btn-open">Open Link</a>` : ''}
-                                ${!isOwner ? `<button class="btn-sm btn-grab" onclick="grab('${item.id}')">Grab 🐾</button>` : `<button class="btn-sm" onclick="deleteItem('${item.id}')">Delete</button>`}
-                            </div>
+                      <div class="widget">
+                        <span class="widget-title">${escapeHtml(item.title)}</span>
+                        <div class="widget-notes">${escapeHtml(item.notes || 'No notes.')}</div>
+                        <div class="actions">
+                          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener noreferrer" class="btn-sm btn-open">Open Link</a>` : ''}
+                    
+                          <button class="btn-sm" onclick="openModal(lastRenderedById.get('${escapeAttr(item.id)}'), ${isOwner})">
+                              ${isOwner ? 'Edit Info' : 'View Info'}
+                          </button>
+                    
+                          ${
+                            !isOwner
+                              ? `<button class="btn-sm btn-grab" onclick="grab('${escapeAttr(item.id)}')">Grab 🐾</button>`
+                              : `<button class="btn-sm" onclick="deleteItem('${escapeAttr(item.id)}')">Delete</button>`
+                          }
                         </div>
+                      </div>
                     `;
                 });
                 tDiv.appendChild(grid);
@@ -216,16 +426,33 @@
     }
 
     async function grab(id) {
-        const { data: item } = await sb.from('items').select('*').eq('id', id).single();
-        // 1. Log it for the owner
-        await sb.from('grab_logs').insert([{
-            grabber_name: sessionUser.email,
-            owner_id: item.owner_id,
-            item_title: item.title
-        }]);
-        // 2. Add to my bucket
-        await sb.from('items').insert([{ ...item, id: undefined, owner_id: sessionUser.id, owner_email: sessionUser.email, created_at: undefined }]);
-        alert("Item 'grabbed' into your bucket!");
+      // Get the source item
+      const { data: item, error: e1 } = await sb.from('items').select('*').eq('id', id).single();
+      if(e1) return alert(e1.message);
+    
+      // 1) Log it for the *owner of the viewed account*
+      const { error: e2 } = await sb.from('grab_logs').insert([{
+        grabber_name: sessionUser.email,
+        owner_id: item.owner_id,        // log belongs to the original owner
+        item_title: item.title
+      }]);
+      if(e2) return alert(e2.message);
+    
+      // 2) Copy into my bucket WITHOUT the owner's personal note
+      const payload = {
+        owner_id: sessionUser.id,
+        owner_email: sessionUser.email,
+        small_bucket: item.small_bucket || "General",
+        tiny_bucket: item.tiny_bucket || "Misc",
+        title: item.title,
+        url: item.url || null,
+        notes: "" // <-- IMPORTANT: do not copy their personal note
+    };
+    
+      const { error: e3 } = await sb.from('items').insert([payload]);
+      if(e3) return alert(e3.message);
+    
+      alert("Grabbed into your bucket (without their note).");
     }
 
     async function deleteItem(id) {
